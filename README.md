@@ -1,3 +1,4 @@
+# Smart-File-Organizer
 # Smart File Organizer + Duplicate File Detector
 
 ## Project Overview
