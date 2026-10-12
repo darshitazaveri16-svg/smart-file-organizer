@@ -1,10 +1,63 @@
 FILE_CATEGORIES = {
-    "Images": [".jpg", ".jpeg", ".png"],
-    "Documents": [".pdf", ".docx", ".txt"],
-    "Videos": [".mp4", ".mkv"],
-    "Music": [".mp3"],
-    "Archives": [".zip", ".rar"],
-    "Code": [".py", ".html", ".css", ".js"]
+    "Images": [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".webp"
+    ],
+
+    "Documents": [
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx"
+    ],
+
+    "Videos": [
+        ".mp4",
+        ".mkv",
+        ".avi",
+        ".mov",
+        ".wmv"
+    ],
+
+    "Music": [
+        ".mp3",
+        ".wav",
+        ".aac",
+        ".flac",
+        ".m4a"
+    ],
+
+    "Archives": [
+        ".zip",
+        ".rar",
+        ".7z",
+        ".tar",
+        ".gz"
+    ],
+
+    "Code": [
+        ".py",
+        ".java",
+        ".js",
+        ".html",
+        ".css",
+        ".cpp",
+        ".c"
+    ]
 }
 
-IGNORED_FILES = [".DS_Store", ".tmp", ".ini"]
+DEFAULT_CATEGORY = "Others"
+
+IGNORED_FILES = [
+    ".DS_Store",
+    "desktop.ini",
+    "Thumbs.db"
+]

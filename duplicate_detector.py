@@ -1,57 +1,57 @@
+
 import os
 import hashlib
 
 
-def generate_hash(file_path):
+SKIP_FOLDERS = {"Duplicates", "reports", "logs"}
 
-    hash_md5 = hashlib.md5()
+
+def generate_hash(file_path):
+    """Return a SHA-256 hash of a file's contents."""
+    sha256 = hashlib.sha256()
 
     try:
         with open(file_path, "rb") as file:
+            while True:
+                chunk = file.read(65536)
+                if not chunk:
+                    break
+                sha256.update(chunk)
 
-            while chunk := file.read(4096):
-                hash_md5.update(chunk)
+        return sha256.hexdigest()
 
-        return hash_md5.hexdigest()
-
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
+    except OSError as error:
+        print(f"Error reading {file_path}: {error}")
         return None
 
 
 def detect_duplicates(folder_path):
-
+    """Find files with identical content without deleting anything."""
     hashes = {}
-
     duplicates = []
 
     for root, dirs, files in os.walk(folder_path):
+        dirs[:] = [
+            folder for folder in dirs
+            if folder not in SKIP_FOLDERS
+        ]
 
-        for file in files:
-
-            file_path = os.path.join(root, file)
-
+        for filename in files:
+            file_path = os.path.join(root, filename)
             file_hash = generate_hash(file_path)
 
             if file_hash is None:
                 continue
 
-            # If hash already exists → duplicate
             if file_hash in hashes:
-
                 duplicates.append(file_path)
-
             else:
                 hashes[file_hash] = file_path
 
-    # Print duplicates separately
     if duplicates:
-
         print("\nDuplicate Files Found:\n")
-
-        for duplicate in duplicates:
-            print(duplicate)
-
+        for path in duplicates:
+            print(path)
     else:
         print("\nNo duplicate files found.")
 

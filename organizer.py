@@ -1,12 +1,15 @@
+
 import os
 import shutil
 import logging
 
 from config import FILE_CATEGORIES
 from utils import get_unique_filename
+from duplicate_detector import generate_hash
 
 
-# Logging Configuration
+os.makedirs("logs", exist_ok=True)
+
 logging.basicConfig(
     filename="logs/app.log",
     level=logging.INFO,
@@ -15,9 +18,7 @@ logging.basicConfig(
 
 
 def get_category(extension):
-
     for category, extensions in FILE_CATEGORIES.items():
-
         if extension.lower() in extensions:
             return category
 
@@ -25,72 +26,79 @@ def get_category(extension):
 
 
 def organize_files(folder_path):
+    folder_path = os.path.abspath(folder_path)
 
-    # Create Duplicates folder
+    if not os.path.isdir(folder_path):
+        print("Error: Folder does not exist.")
+        return
+
     duplicates_folder = os.path.join(folder_path, "Duplicates")
     os.makedirs(duplicates_folder, exist_ok=True)
 
-    # Dictionary to track file names
-    seen_files = {}
+    seen_hashes = {}
 
+    # Hash files already in category folders so newly added
+    # copies can be recognized on later runs.
     for root, dirs, files in os.walk(folder_path):
+        dirs[:] = [
+            d for d in dirs
+            if d not in {"Duplicates", "reports", "logs"}
+        ]
 
-        # Skip Duplicates folder itself
-        if "Duplicates" in root:
+        if os.path.abspath(root) == folder_path:
             continue
 
-        for file in files:
+        for filename in files:
+            path = os.path.join(root, filename)
+            file_hash = generate_hash(path)
 
-            try:
+            if file_hash:
+                seen_hashes.setdefault(file_hash, path)
 
-                file_path = os.path.join(root, file)
+    # Process only files directly inside the selected folder.
+    try:
+        filenames = os.listdir(folder_path)
+    except OSError as error:
+        print(f"Cannot access folder: {error}")
+        return
 
-                # Skip if not a file
-                if not os.path.isfile(file_path):
-                    continue
+    for filename in filenames:
+        file_path = os.path.join(folder_path, filename)
 
-                extension = os.path.splitext(file)[1]
+        if not os.path.isfile(file_path):
+            continue
 
-                category = get_category(extension)
+        try:
+            file_hash = generate_hash(file_path)
 
-                category_folder = os.path.join(folder_path, category)
+            if file_hash is None:
+                continue
 
+            if file_hash in seen_hashes:
+                destination = get_unique_filename(
+                    os.path.join(duplicates_folder, filename)
+                )
+                shutil.move(file_path, destination)
+                message = f"Duplicate moved: {filename}"
+            else:
+                category = get_category(
+                    os.path.splitext(filename)[1]
+                )
+                category_folder = os.path.join(
+                    folder_path, category
+                )
                 os.makedirs(category_folder, exist_ok=True)
 
-                # Duplicate detection using filename
-                if file in seen_files:
+                destination = get_unique_filename(
+                    os.path.join(category_folder, filename)
+                )
+                shutil.move(file_path, destination)
+                seen_hashes[file_hash] = destination
+                message = f"Moved: {filename} -> {category}"
 
-                    duplicate_destination = os.path.join(
-                        duplicates_folder,
-                        file
-                    )
+            print(message)
+            logging.info(message)
 
-                    duplicate_destination = get_unique_filename(
-                        duplicate_destination
-                    )
-
-                    shutil.move(file_path, duplicate_destination)
-
-                    print(f"Duplicate moved: {file}")
-
-                    logging.info(f"Duplicate moved: {file}")
-
-                else:
-
-                    seen_files[file] = file_path
-
-                    destination = os.path.join(category_folder, file)
-
-                    destination = get_unique_filename(destination)
-
-                    shutil.move(file_path, destination)
-
-                    print(f"Moved: {file} → {category}")
-
-                    logging.info(f"Moved file: {file}")
-
-            except Exception as e:
-
-                print(f"Error processing file {file}: {e}")
-
-                logging.error(f"Error processing file {file}: {e}")
+        except (OSError, shutil.Error) as error:
+            print(f"Error processing {filename}: {error}")
+            logging.exception("Error processing %s", filename)

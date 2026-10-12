@@ -1,301 +1,183 @@
-# Smart-File-Organizer
-# Smart File Organizer + Duplicate File Detector
+# Smart File Organizer
 
-## Project Overview
+A Python desktop application that organizes files into categorized folders, detects duplicate files, and generates reports through a graphical interface or command-line menu.
 
-Smart File Organizer is a Python-based automation project that automatically organizes files into categorized folders and detects duplicate files. The project helps users clean messy directories, improve file management, and reduce storage clutter.
+## Overview
 
-This project is built using modular Python architecture and demonstrates practical concepts such as file handling, hashing, logging, automation, and error handling.
+**Smart File Organizer** helps users manage cluttered folders by automatically sorting files according to their extensions. It also identifies duplicate files using file hashing, moves duplicates into a separate folder, and records application activity.
 
----
+The project includes a CustomTkinter-based GUI dashboard and a command-line interface (CLI).
 
-# Features
+## Features
 
-* Automatic file organization
-* Categorizes files based on extensions
-* Creates folders automatically
-* Detects duplicate files
-* Moves duplicate files to a separate folder
-* Logging system for tracking activities
-* Report generation system
-* Command Line Interface (CLI)
-* Error handling for invalid paths and file issues
+- **Automatic File Organization:** Sort files into categorized folders based on their extensions.
+- **Duplicate Detection:** Identify duplicate files using MD5 hashing.
+- **Duplicate Management:** Move detected duplicates into a dedicated `Duplicates/` folder.
+- **GUI Dashboard:** Interact with the application through a desktop interface.
+- **Dark and Light Modes:** Switch between interface themes.
+- **Activity Logging:** Record application operations and errors.
+- **Report Generation:** Generate reports with file and duplicate information.
+- **Modular Architecture:** Keep organization, duplicate detection, reporting, and configuration in separate Python modules.
+- **Error Handling:** Handle invalid inputs and common file-operation errors.
 
----
+## Technology Stack
 
-# Folder Structure
+- **Language:** Python
+- **GUI:** CustomTkinter, Pillow
+- **File Operations:** `os`, `shutil`
+- **Duplicate Detection:** `hashlib`
+- **Logging:** `logging`
+- **Version Control:** Git and GitHub
 
-```text id="cljlwm"
+## Project Structure
+
+```text
 smart-file-organizer/
-│
+├── gui/
+│   ├── app_ui.py
+│   └── assets/
+│       └── icons/
+├── logs/
+│   └── .gitkeep
+├── reports/
+│   └── .gitkeep
+├── test_data/
+│   └── README.md
+├── config.py
+├── duplicate_detector.py
 ├── main.py
 ├── organizer.py
-├── duplicate_detector.py
 ├── report_generator.py
 ├── utils.py
-├── config.py
-│
-├── logs/
-│   └── app.log
-│
-├── reports/
-│   └── report.txt
-│
-├── test_data/
-│
 ├── requirements.txt
+├── project_structure.txt
+├── .gitignore
 └── README.md
 ```
 
----
+## Getting Started
 
-# Technologies Used
+### Prerequisites
 
-* Python
-* os module
-* shutil module
-* hashlib
-* logging
-* modular programming
+- Python installed on your computer
+- Git, if you want to clone the repository
 
----
+### 1. Clone the repository
 
-# How the Project Works
-
-```text id="9g7r1m"
-Select Folder
-      ↓
-Scan Files
-      ↓
-Detect File Extensions
-      ↓
-Categorize Files
-      ↓
-Create Category Folders
-      ↓
-Move Files
-      ↓
-Detect Duplicate Files
-      ↓
-Move Duplicates
-      ↓
-Generate Report
-      ↓
-Save Logs
-```
-
----
-
-# File Categories
-
-The project currently supports:
-
-| Category  | Extensions            |
-| --------- | --------------------- |
-| Images    | .jpg, .jpeg, .png     |
-| Documents | .pdf, .docx, .txt     |
-| Videos    | .mp4, .mkv            |
-| Music     | .mp3                  |
-| Archives  | .zip, .rar            |
-| Code      | .py, .html, .css, .js |
-
-Unrecognized files are stored inside:
-
-```text id="g3v8m2"
-Others/
-```
-
----
-
-# Duplicate Detection
-
-Duplicate files are detected using:
-
-```text id="f5x1q8"
-MD5 Hashing
-```
-
-Each file is converted into a unique hash value.
-If two files have the same hash:
-
-```text id="n2w7k4"
-they are considered duplicates
-```
-
-Duplicate files are automatically moved into:
-
-```text id="q9m4x1"
-Duplicates/
-```
-
----
-
-# Logging System
-
-Project activities are stored inside:
-
-```text id="1v8q5n"
-logs/app.log
-```
-
-Logs include:
-
-* moved files
-* duplicate files
-* errors
-* processing details
-
----
-
-# Report Generation
-
-Reports are automatically generated inside:
-
-```text id="m7x2q9"
-reports/report.txt
-```
-
-The report contains:
-
-* total scanned files
-* duplicate files
-* organized files
-* processing summary
-
----
-
-# How To Run the Project
-
-## Step 1 — Clone Repository
-
-```bash id="s4q8m1"
-git clone YOUR_GITHUB_REPOSITORY_LINK
-```
-
----
-
-## Step 2 — Open Project Folder
-
-```bash id="4x7n2m"
+```bash
+git clone https://github.com/darshitazaveri16-svg/smart-file-organizer.git
 cd smart-file-organizer
 ```
 
----
+### 2. Create a virtual environment
 
-## Step 3 — Create Virtual Environment
-
-```bash id="p1m9q6"
+```bash
 python -m venv venv
 ```
 
----
+### 3. Activate the virtual environment
 
-## Step 4 — Activate Virtual Environment
+**Windows PowerShell:**
 
-### Windows
-
-```bash id="k5v2x8"
-venv\Scripts\activate
+```powershell
+.\venv\Scripts\Activate.ps1
 ```
 
----
+If PowerShell blocks activation, you can use Command Prompt:
 
-## Step 5 — Install Dependencies
-
-```bash id="7q1m4x"
-pip install -r requirements.txt
+```bat
+venv\Scripts\activate.bat
 ```
 
----
+### 4. Install dependencies
 
-## Step 6 — Run the Project
+```bash
+python -m pip install -r requirements.txt
+```
 
-```bash id="6n3v8q"
+### 5. Launch the graphical interface
+
+```bash
+python gui/app_ui.py
+```
+
+### Run the command-line interface
+
+```bash
 python main.py
 ```
 
----
+## How It Works
 
-# CLI Menu
+1. Select a folder to process.
+2. Scan files in the selected folder.
+3. Identify file categories using their extensions.
+4. Move files into the corresponding category folders.
+5. Detect duplicate files when the duplicate-detection feature is used.
+6. Generate a report and record application activity.
 
-```text id="r2m7x1"
-===================================
- SMART FILE ORGANIZER
-===================================
+**Important:** Test the application on a sample folder first. File organization and duplicate handling move files on disk, so use a backup when processing important data.
 
-1. Organize Files
-2. Detect Duplicate Files
-3. Generate Report
-4. Exit
+## File Categories
+
+The application uses configured file-extension categories. Depending on the extensions defined in `config.py`, files may be organized into folders such as:
+
+- `Images/`
+- `Documents/`
+- `Videos/`
+- `Music/`
+- `Archives/`
+- `Code/`
+- `Others/`
+
+Check `config.py` for the exact extensions supported by your current version.
+
+## Duplicate Detection
+
+The application uses MD5 hashing to compare file contents. Files with matching hashes are treated as duplicates by the detector.
+
+Detected duplicates can be moved to a `Duplicates/` folder, helping keep the main categorized folders organized.
+
+## Logs and Reports
+
+- **Logs:** Application activity is recorded under `logs/`.
+- **Reports:** Generated reports are saved under `reports/`. Report filenames may include timestamps so that multiple reports can be kept separately.
+
+Generated logs and reports are excluded from version control where configured in `.gitignore`.
+
+## Screenshots
+
+Screenshots of the application dashboard, file organization results, and duplicate detection can be added here to demonstrate the interface.
+
+For example, save your screenshots in a `screenshots/` folder and embed them using Markdown:
+
+```markdown
+![Smart File Organizer Dashboard](screenshots/dashboard.png)
 ```
 
----
+## Future Improvements
 
-# Example Output
+- Drag-and-drop folder selection
+- More detailed file statistics
+- Additional report formats
+- Scheduled file organization
+- Further improvements to duplicate review and recovery
 
-## Organized Files
+## Learning Outcomes
 
-Before:
+This project demonstrates practical experience with:
 
-```text id="z4m8q2"
-test_data/
-    photo.jpg
-    resume.pdf
-    song.mp3
-```
+- Python file handling and automation
+- Modular application design
+- Hashing and duplicate detection
+- GUI development
+- Logging and error handling
+- Git and GitHub workflows
 
-After:
+## Author
 
-```text id="5x1n7m"
-test_data/
-    Images/
-        photo.jpg
+**Darshita Zaveri**
 
-    Documents/
-        resume.pdf
+## License
 
-    Music/
-        song.mp3
-```
-
----
-
-# Future Improvements
-
-Future versions may include:
-
-* GUI using Tkinter
-* Drag-and-drop support
-* AI-based file classification
-* Dark mode interface
-* CSV/PDF reports
-* Real-time monitoring
-* File size analytics
-* Automatic scheduling
-
----
-
-# Learning Outcomes
-
-This project helped in learning:
-
-* File handling in Python
-* Automation scripting
-* Modular project architecture
-* Hashing algorithms
-* Error handling
-* Logging systems
-* CLI application development
-* Git and GitHub workflow
-
----
-
-# Author
-
-Developed by Darshita Zaveri
-
----
-
-# License
-
-This project is for educational and learning purposes.
+This project is intended for educational and learning purposes.

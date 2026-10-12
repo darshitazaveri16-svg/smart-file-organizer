@@ -35,6 +35,8 @@ app.minsize(1200, 700)
 # ===================== GLOBAL VARIABLES ===================== #
 
 selected_folder = ""
+is_light_mode = False
+
 # ===================== LOAD ICONS ===================== #
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -68,222 +70,333 @@ categories_icon = ctk.CTkImage(
 
 # ===================== FUNCTIONS ===================== #
 
-def select_folder():
 
+def refresh_dashboard_stats():
+    """Refresh file count, storage, and file-type statistics."""
+    if not selected_folder or not os.path.isdir(selected_folder):
+        return
+
+    total_files = 0
+    total_size = 0
+    file_types = set()
+
+    for root, dirs, files in os.walk(selected_folder):
+        dirs[:] = [
+            folder for folder in dirs
+            if folder not in {"reports", "logs"}
+        ]
+
+        for filename in files:
+            file_path = os.path.join(root, filename)
+
+            try:
+                total_files += 1
+                total_size += os.path.getsize(file_path)
+
+                extension = os.path.splitext(filename)[1].lower()
+                if extension:
+                    file_types.add(extension)
+            except OSError:
+                continue
+
+    files_card_label.configure(text=str(total_files))
+    storage_card_label.configure(
+        text=f"{total_size / (1024 * 1024):.2f} MB"
+    )
+    categories_card_label.configure(text=str(len(file_types)))
+
+
+def select_folder():
     global selected_folder
 
-    selected_folder = filedialog.askdirectory()
+    folder = filedialog.askdirectory(title="Select a folder to organize")
 
-    if selected_folder:
-
-        status_label.configure(
-            text=f"Selected Folder:\n{selected_folder}",
-            text_color="lightgreen"
-        )
-
-        total_files = 0
-
-        total_size = 0
-
-        categories = set()
-
-        for root, dirs, files in os.walk(selected_folder):
-
-            total_files += len(files)
-
-            for file in files:
-
-                file_path = os.path.join(root, file)
-
-                try:
-
-                    total_size += os.path.getsize(file_path)
-
-                    extension = os.path.splitext(file)[1]
-
-                    if extension:
-                        categories.add(extension)
-
-                except:
-                    pass
-
-        size_mb = round(total_size / (1024 * 1024), 2)
-
-        files_card_label.configure(
-            text=f"{total_files}"
-        )
-
-        storage_card_label.configure(
-            text=f"{size_mb} MB"
-        )
-
-        categories_card_label.configure(
-            text=f"{len(categories)}"
-        )
-
-    else:
-
+    if not folder:
         status_label.configure(
             text="No Folder Selected",
-            text_color="red"
+            text_color="orange"
         )
+        return
+
+    selected_folder = folder
+    status_label.configure(
+        text=f"Selected: {selected_folder}",
+        text_color="lightgreen"
+    )
+
+    refresh_dashboard_stats()
+
+    activity_box.insert("end", "📁 Folder selected\n")
+    activity_box.see("end")
+
+
 
 
 def organize_action():
-
     if not selected_folder:
-
         messagebox.showwarning(
-            "Warning",
-            "Please Select Folder First"
+            "Folder Required",
+            "Please select a folder first."
         )
         return
 
     try:
-
         progressbar.set(0.2)
-
-        app.update()
+        app.update_idletasks()
 
         organize_files(selected_folder)
 
+        refresh_dashboard_stats()
         progressbar.set(1)
 
         status_label.configure(
-            text="Files Organized Successfully!",
+            text="Files organized successfully!",
+            text_color="lightgreen"
+        )
+        activity_box.insert("end", "✔ File organization completed\n")
+        activity_box.see("end")
+
+    except Exception as e:
+        status_label.configure(text="Organization failed", text_color="red")
+        messagebox.showerror("Organization Error", str(e))
+
+    finally:
+        progressbar.set(0)
+
+
+
+def generate_report_action():
+    if not selected_folder:
+        messagebox.showwarning(
+            "Folder Required",
+            "Please select a folder first."
+        )
+        return
+
+    try:
+        progressbar.set(0.3)
+        app.update_idletasks()
+
+        total_files = 0
+
+        for root, dirs, files in os.walk(selected_folder):
+            dirs[:] = [
+                folder for folder in dirs
+                if folder not in {"reports", "logs"}
+            ]
+            total_files += len(files)
+
+        duplicates = detect_duplicates(selected_folder)
+        report_path = generate_report(total_files, duplicates)
+
+        status_label.configure(
+            text="Report generated successfully!",
             text_color="lightgreen"
         )
 
         activity_box.insert(
             "end",
-            "✔ Files Organized Successfully\n"
+            f"📄 Report saved: {report_path}\n"
+        )
+        activity_box.see("end")
+
+        messagebox.showinfo(
+            "Report Generated",
+            f"Your report was saved to:\n{os.path.abspath(report_path)}"
         )
 
     except Exception as e:
+        status_label.configure(text="Report generation failed", text_color="red")
+        messagebox.showerror("Report Error", str(e))
 
-        status_label.configure(
-            text=f"Error: {e}",
-            text_color="red"
+    finally:
+        progressbar.set(0)
+
+
+
+
+def toggle_mode():
+    global is_light_mode
+
+    is_light_mode = not is_light_mode
+
+    if is_light_mode:
+        ctk.set_appearance_mode("light")
+
+        app.configure(fg_color="#F3F6FC")
+        container.configure(fg_color="#F3F6FC")
+        header.configure(fg_color="#FFFFFF")
+        sidebar.configure(fg_color="#E8EEF8")
+        main_dashboard.configure(fg_color="#F3F6FC")
+
+        header_title.configure(text_color="#172554")
+        logo_text.configure(text_color="#172554")
+        dashboard_title.configure(text_color="#172554")
+        status_label.configure(text_color="#15803D")
+
+        for card in (
+            files_card,
+            duplicates_card,
+            storage_card,
+            categories_card
+        ):
+            card.configure(
+                fg_color="#FFFFFF",
+                border_color="#DCE4F0"
+            )
+
+        duplicate_frame.configure(
+            fg_color="#FFFFFF",
+            border_color="#DCE4F0"
         )
+        activity_frame.configure(
+            fg_color="#FFFFFF",
+            border_color="#DCE4F0"
+        )
+        for label in (
+           files_card_label,
+           duplicates_card_label,
+           storage_card_label,
+           categories_card_label
+        ):
+           label.configure(text_color="#172554")
+
+        for label in card_title_labels:
+            label.configure(text_color="#334155")
+
+        duplicate_title.configure(text_color="#172554")
+        activity_title.configure(text_color="#172554")
+
+        duplicate_box.configure(
+            fg_color="#F8FAFC",
+            text_color="#1E293B",
+            border_color="#DCE4F0"
+        )
+        activity_box.configure(
+            fg_color="#F8FAFC",
+            text_color="#1E293B"
+        )
+
+        theme_btn.configure(
+            text="☀️ Light Mode",
+            fg_color="#DBEAFE",
+            hover_color="#BFDBFE",
+            text_color="#1D4ED8"
+        )
+
+    else:
+        ctk.set_appearance_mode("dark")
+
+        app.configure(fg_color="#0B1120")
+        container.configure(fg_color="#0B1120")
+        header.configure(fg_color="#0F172A")
+        sidebar.configure(fg_color="#111827")
+        main_dashboard.configure(fg_color="#0B1120")
+
+        header_title.configure(text_color="#FFFFFF")
+        logo_text.configure(text_color="#FFFFFF")
+        dashboard_title.configure(text_color="#FFFFFF")
+        status_label.configure(text_color="#4ADE80")
+
+        for card in (
+            files_card,
+            duplicates_card,
+            storage_card,
+            categories_card
+        ):
+            card.configure(
+                fg_color="#172036",
+                border_color="#22304A"
+            )
+
+        duplicate_frame.configure(
+            fg_color="#111827",
+            border_color="#22304A"
+        )
+        activity_frame.configure(
+            fg_color="#111827",
+            border_color="#22304A"
+        )
+        for label in (
+           files_card_label,
+           duplicates_card_label,
+           storage_card_label,
+           categories_card_label
+        ):
+            label.configure(text_color="#F8FAFC")
+
+        for label in card_title_labels:
+            label.configure(text_color="#CBD5E1")
+        duplicate_title.configure(text_color="#FFFFFF")
+        activity_title.configure(text_color="#FFFFFF")
+
+        duplicate_box.configure(
+            fg_color="#0F172A",
+            text_color="#FFFFFF",
+            border_color="#334155"
+        )
+        activity_box.configure(
+            fg_color="#111827",
+            text_color="#FFFFFF"
+        )
+
+        theme_btn.configure(
+            text="🌙 Dark Mode",
+            fg_color="#2563EB",
+            hover_color="#1D4ED8",
+            text_color="#FFFFFF"
+        )
+
+        for label in (
+          files_card_label,
+          duplicates_card_label,
+          storage_card_label,
+          categories_card_label
+        ):
+          label.configure(text_color="#FFFFFF")
+
+
+
 
 
 def detect_action():
-
     if not selected_folder:
-
         messagebox.showwarning(
-            "Warning",
-            "Please Select Folder First"
+            "Folder Required",
+            "Please select a folder first."
         )
         return
 
     try:
-
         progressbar.set(0.3)
-
-        app.update()
+        app.update_idletasks()
 
         duplicates = detect_duplicates(selected_folder)
 
         duplicate_box.delete("1.0", "end")
-
-        duplicates_card_label.configure(
-            text=f"{len(duplicates)}"
-        )
+        duplicates_card_label.configure(text=str(len(duplicates)))
 
         if duplicates:
-
-            for file in duplicates:
-
-                duplicate_box.insert(
-                    "end",
-                    f"📄 {file}\n\n"
-                )
-
+            for file_path in duplicates:
+                duplicate_box.insert("end", f"📄 {file_path}\n\n")
             status_label.configure(
-                text=f"Duplicates Found: {len(duplicates)}",
+                text=f"Duplicates found: {len(duplicates)}",
                 text_color="orange"
             )
-
         else:
-
-            duplicate_box.insert(
-                "end",
-                "No Duplicate Files Found"
-            )
-
+            duplicate_box.insert("end", "No duplicate files found.")
             status_label.configure(
-                text="No Duplicates Found",
+                text="No duplicates found",
                 text_color="lightgreen"
             )
 
-        progressbar.set(1)
-
-        activity_box.insert(
-            "end",
-            "🔍 Duplicate Scan Completed\n"
-        )
+        activity_box.insert("end", "Duplicate scan completed\n")
 
     except Exception as e:
+        messagebox.showerror("Duplicate Scan Error", str(e))
 
-        status_label.configure(
-            text=f"Error: {e}",
-            text_color="red"
-        )
-
-
-def generate_report_action():
-
-    if not selected_folder:
-
-        messagebox.showwarning(
-            "Warning",
-            "Please Select Folder First"
-        )
-        return
-
-    try:
-
-        total_files = 0
-
-        for root, dirs, files in os.walk(selected_folder):
-            total_files += len(files)
-
-        duplicates = detect_duplicates(selected_folder)
-
-        generate_report(total_files, duplicates)
-
-        status_label.configure(
-            text="Report Generated Successfully!",
-            text_color="lightgreen"
-        )
-
-        activity_box.insert(
-            "end",
-            "📄 Report Generated Successfully\n"
-        )
-
-        progressbar.set(1)
-
-    except Exception as e:
-
-        status_label.configure(
-            text=f"Error: {e}",
-            text_color="red"
-        )
-
-
-def toggle_mode():
-
-    current = ctk.get_appearance_mode()
-
-    if current == "Dark":
-
-        ctk.set_appearance_mode("light")
-
-    else:
-
-        ctk.set_appearance_mode("dark")
+    finally:
+        progressbar.set(0)
 
 
 # ===================== HEADER ===================== #
@@ -487,6 +600,7 @@ dashboard_title.pack(
 
 
 # ===================== CARDS SECTION ===================== #
+card_title_labels = []
 
 cards_frame = ctk.CTkFrame(
     main_dashboard,
@@ -505,22 +619,24 @@ def create_card(parent, title, value,icon):
     parent,
     width=220,
     height=130,
-    corner_radius=20,
+    corner_radius=16,
     fg_color="#172036",
     border_width=1,
-    border_color="#22304A"
+    border_color="#2D3B55"
     )
 
     card.pack_propagate(False)
 
     title_label = ctk.CTkLabel(
-    card,
-    text=title,
-    image=icon,
-    compound="left",
-    font=("Poppins", 18),
-    text_color="#A5B4FC"
+        card,
+        text=title,
+        image=icon,
+        compound="left",
+        font=("Segoe UI", 15, "bold"),
+        text_color="#CBD5E1"
     )
+
+    card_title_labels.append(title_label)
 
     title_label.pack(
         pady=(20, 10)
@@ -529,8 +645,8 @@ def create_card(parent, title, value,icon):
     value_label = ctk.CTkLabel(
         card,
         text=value,
-        font=("Segoe UI", 32, "bold"),
-        text_color="white"
+        font=("Segoe UI", 30, "bold"),
+        text_color="#F8FAFC"
     )
 
     value_label.pack()
@@ -690,11 +806,16 @@ activity_title.pack(
     pady=20
 )
 
+
 activity_box = ctk.CTkTextbox(
     activity_frame,
     width=300,
-    font=("Consolas", 14),
-    corner_radius=12
+    font=("Consolas", 13),
+    corner_radius=12,
+    fg_color="#0F172A",
+    text_color="#E2E8F0",
+    border_width=1,
+    border_color="#334155"
 )
 
 activity_box.pack(

@@ -48,3 +48,17 @@ reports/*.json
 # -----------------------------
 *.tmp
 *.temp
+
+# Local test data
+test_data/final_test/
+test_data/organizer_test/
+
+# Generated project outputs
+logs/*.log
+reports/*.txt
+reports/*.csv
+reports/*.json
+
+# Keep placeholder files in Git
+!logs/.gitkeep
+!reports/.gitkeep
